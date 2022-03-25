@@ -1,0 +1,1 @@
+ssh -Xt pi@chemmat-pi106 'xterm /home/pi/Camera/bin/start_camserver'

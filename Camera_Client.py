@@ -15,14 +15,14 @@ class VideoThread(QThread):
     def __init__(self):
         super().__init__()
         self._run_flag = True
-        # self.image_hub = imagezmq.ImageHub()
-        self.image_hub = imagezmq.ImageHub(open_port='tcp://164.54.162.106:5555', REQ_REP=False)
+        self.image_hub = imagezmq.ImageHub()
+        #self.image_hub = imagezmq.ImageHub(open_port='tcp://164.54.162.106:5555', REQ_REP=False)
 
     def run(self):
         # capture from web cam
         while self._run_flag:
             rpi_name, image = self.image_hub.recv_image()
-            # self.image_hub.send_reply(b'OK')
+            self.image_hub.send_reply(b'OK')
             if rpi_name=='chemmat-pi106':
                 self.change_pixmap_signal.emit(image)
         # shut down capture system
@@ -71,7 +71,7 @@ class Camera_Widget(QWidget):
         """Updates the image_label with a new opencv image"""
         #qt_img = self.convert_cv_qt(cv_img)
         #self.image_label.setPixmap(qt_img)
-        self.image_item.setImage(cv_img.T,autoHistogramRange=False,autoLevels=False)
+        self.image_item.setImage(cv_img.T,autoRange=False)#,autoHistogramRange=False,autoLevels=False)
 
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
