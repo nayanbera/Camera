@@ -1,5 +1,5 @@
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib
-/usr/bin/python3 ~/Camera/camserver.py
+/usr/bin/python3 ~/Camera/camserver.py $1
 #procServ --logstamp --noautorestart -n "camserver" -i ^D -L /home/pi/camera/logs/motion.log 20001 /usr/bin/python3 ~/camera/camserver.py
 #telnet localhost 20001
 

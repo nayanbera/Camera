@@ -1,7 +1,7 @@
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QCheckBox, QSpacerItem
+from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout, QHBoxLayout, QPushButton, QCheckBox, QSpacerItem, QLineEdit
 from PyQt5.QtGui import QPixmap
-from PyQt5.Qt import QSizePolicy
+from PyQt5.Qt import QSizePolicy, QIntValidator
 import sys
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
@@ -42,12 +42,13 @@ class Camera_Widget(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Camera Widget")
-        self.disply_width = 1920
+        self.disply_width = 1290
         self.display_height = 720
+        self.intValidator=QIntValidator()
         # create the label that holds the image
-        img = np.random.rand(1920, 720)
+        img = np.random.rand(1290, 720)
         self.image_widget=Image_Widget(img,transpose=True)
-        self.pos = [[100, 100], [200, 100], [200, 200], [100, 200]]
+        self.pos = [[0, 0], [100, 0], [100, 100], [0, 100]]
         #self.image_label.resize(self.disply_width, self.display_height)
         # create a text label
         self.controlsText=QLabel('Controls')
@@ -57,6 +58,40 @@ class Camera_Widget(QWidget):
         self.showROICheckBox.setEnabled(False)
         self.showROICheckBox.stateChanged.connect(self.showhideROI)
         self.removeROIPushButton=QPushButton('Remove ROI')
+        self.transROILabel=QLabel('Transformed ROI Dimensions')
+        self.hROILayout=QHBoxLayout()
+        self.transROIHLabel=QLabel('H:')
+        self.transROIHLineEdit=QLineEdit('100')
+        self.hROILayout.addWidget(self.transROIHLabel)
+        self.hROILayout.addWidget(self.transROIHLineEdit)
+        self.transROIHLineEdit.setValidator(self.intValidator)
+        self.transROIHLineEdit.returnPressed.connect(self.get_ROI_pos)
+        self.transROIHLineEdit.setEnabled(False)
+        self.vROILayout = QHBoxLayout()
+        self.transROIVLabel = QLabel('V:')
+        self.transROIVLineEdit = QLineEdit('100')
+        self.vROILayout.addWidget(self.transROIVLabel)
+        self.vROILayout.addWidget(self.transROIVLineEdit)
+        self.transROIVLineEdit.setValidator(self.intValidator)
+        self.transROIVLineEdit.returnPressed.connect(self.get_ROI_pos)
+        self.transROIVLineEdit.setEnabled(False)
+        self.transImageLabel = QLabel('Transformed Image Dimensions')
+        self.hImageLayout = QHBoxLayout()
+        self.transImageHLabel = QLabel('H:')
+        self.transImageHLineEdit = QLineEdit('1290')
+        self.hImageLayout.addWidget(self.transImageHLabel)
+        self.hImageLayout.addWidget(self.transImageHLineEdit)
+        self.transImageHLineEdit.setValidator(self.intValidator)
+        self.transImageHLineEdit.returnPressed.connect(self.imageDimChanged)
+        self.transImageHLineEdit.setEnabled(False)
+        self.vImageLayout = QHBoxLayout()
+        self.transImageVLabel = QLabel('V:')
+        self.transImageVLineEdit = QLineEdit('720')
+        self.vImageLayout.addWidget(self.transImageVLabel)
+        self.vImageLayout.addWidget(self.transImageVLineEdit)
+        self.transImageVLineEdit.setValidator(self.intValidator)
+        self.transImageVLineEdit.returnPressed.connect(self.imageDimChanged)
+        self.transImageVLineEdit.setEnabled(False)
         self.transformCheckBox=QCheckBox('Transform')
         self.transformCheckBox.setEnabled(False)
 
@@ -72,6 +107,12 @@ class Camera_Widget(QWidget):
         control_vbox.addWidget(self.removeROIPushButton)
         self.removeROIPushButton.clicked.connect(self.removeROI)
         self.removeROIPushButton.setEnabled(False)
+        control_vbox.addWidget(self.transROILabel)
+        control_vbox.addLayout(self.hROILayout)
+        control_vbox.addLayout(self.vROILayout)
+        control_vbox.addWidget(self.transImageLabel)
+        control_vbox.addLayout(self.hImageLayout)
+        control_vbox.addLayout(self.vImageLayout)
         control_vbox.addWidget(self.transformCheckBox)
         spacer_item=QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         control_vbox.addItem(spacer_item)
@@ -79,6 +120,7 @@ class Camera_Widget(QWidget):
         hbox.addLayout(img_vbox)
         hbox.addLayout(control_vbox)
         self.setLayout(hbox)
+        self.imageDimChanged()
 
         # create the video capture thread
         self.thread = VideoThread()
@@ -88,7 +130,7 @@ class Camera_Widget(QWidget):
         self.thread.start()
 
     def addROI(self):
-        self.ROI=pg.PolyLineROI(self.pos,closed=True)
+        self.ROI=pg.PolyLineROI(self.pos,closed=True,pos=self.pos[0],pen=pg.mkPen('red',width=2))
         self.image_widget.imageView.view.addItem(self.ROI)
         self.addROIPushButton.setEnabled(False)
         self.removeROIPushButton.setEnabled(True)
@@ -97,17 +139,29 @@ class Camera_Widget(QWidget):
         self.transformCheckBox.setEnabled(True)
         self.get_ROI_pos()
         self.ROI.sigRegionChangeFinished.connect(self.get_ROI_pos)
+        self.transROIHLineEdit.setEnabled(True)
+        self.transROIVLineEdit.setEnabled(True)
+        self.transImageHLineEdit.setEnabled(True)
+        self.transImageVLineEdit.setEnabled(True)
 
 
     def get_ROI_pos(self):
-        handles=self.ROI.getHandles()
+
+        handles=self.ROI.getSceneHandlePositions()
         self.ROI_pos=[]
         for handle in handles[:2]:
-            self.ROI_pos.append([handle.pos().x(), handle.pos().y()])
+            pointer = self.image_widget.imageView.getView().vb.mapSceneToView(handle[1])
+            x, y = pointer.x(), pointer.y()
+            self.ROI_pos.append([x, y])
         for handle in handles[3:1:-1]:
-            self.ROI_pos.append([handle.pos().x(), handle.pos().y()])
-        self.new_pos=copy.copy(self.ROI_pos)
-        self.resmat=cv2.getPerspectiveTransform(np.float32(self.ROI_pos),np.float32(self.new_pos))
+            pointer = self.image_widget.imageView.getView().vb.mapSceneToView(handle[1])
+            x, y = pointer.x(), pointer.y()
+            self.ROI_pos.append([x, y])
+        self.ROI_pos=np.float32(self.ROI_pos)
+        h=int(self.transROIHLineEdit.text())
+        v=int(self.transROIVLineEdit.text())
+        self.new_pos=np.float32([[0,0],[h,0],[0,v],[h,v]])+self.ROI_pos[0]
+        self.resmat=cv2.getPerspectiveTransform(self.ROI_pos,self.new_pos)
 
     def removeROI(self):
         self.pos=[]
@@ -120,6 +174,10 @@ class Camera_Widget(QWidget):
         self.addROIPushButton.setEnabled(True)
         self.removeROIPushButton.setEnabled(False)
         self.showROICheckBox.setEnabled(False)
+        self.transROIVLineEdit.setEnabled(False)
+        self.transROIHLineEdit.setEnabled(False)
+        self.transImageVLineEdit.setEnabled(False)
+        self.transImageHLineEdit.setEnabled(False)
 
     def showhideROI(self):
         if self.showROICheckBox.isChecked():
@@ -132,26 +190,18 @@ class Camera_Widget(QWidget):
         self.thread.stop()
         event.accept()
 
+    def imageDimChanged(self):
+        self.imageH=int(self.transImageHLineEdit.text())
+        self.imageV=int(self.transImageVLineEdit.text())
+
     @pyqtSlot(np.ndarray)
     def update_image(self, cv_img):
         """Updates the image_label with a new opencv image"""
-        #qt_img = self.convert_cv_qt(cv_img)
-        #self.image_label.setPixmap(qt_img)
         if self.transformCheckBox.isChecked():
-            new_img = cv2.warpPerspective(cv_img.T, self.resmat, (self.disply_width,self.display_height))
+            new_img = cv2.warpPerspective(cv_img, self.resmat, (self.imageH,self.imageV))
         else:
-            new_img = cv_img.T
-        self.image_widget.setImage(new_img,transpose=False)#,autoHistogramRange=False,autoLevels=False)
-
-    def convert_cv_qt(self, cv_img):
-        """Convert from an opencv image to QPixmap"""
-        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
-        h, w, ch = rgb_image.shape
-        bytes_per_line = ch * w
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.disply_width, self.display_height, Qt.KeepAspectRatio)
-        return QPixmap.fromImage(p)
-
+            new_img = cv_img
+        self.image_widget.setImage(new_img.T,transpose=False)#,autoHistogramRange=False,autoLevels=False)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

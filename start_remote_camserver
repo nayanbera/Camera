@@ -1,1 +1,3 @@
-ssh -Xt pi@chemmat-pi106 'xterm /home/pi/Camera/bin/start_camserver'
+command="xterm -e /home/pi/Camera/bin/start_camserver "
+command+=$2
+ssh -Xt $1 $command
