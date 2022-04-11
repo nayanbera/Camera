@@ -262,12 +262,17 @@ class Image_Widget(QWidget):
         pointer = self.imageView.getView().vb.mapSceneToView(pos)
         x, y = pointer.x(), pointer.y()
         # if int(self.xmax-self.xmin)<self.imageData.shape[1] or int(self.ymax-self.ymin)<self.imageData.shape[0]:
-        if (x > self.xmin) and (x < self.xmax) and (y > self.ymin) and (y < self.ymax):
-            self.imageCrossHair.setText('X=%0.4f, Y=%0.4f, I=%.5e' % (x, y, self.imageData[
-                int((x - self.xmin) * self.hor_Npt / (self.xmax - self.xmin)), int(
-                    (y - self.ymin) * self.ver_Npt / (self.ymax - self.ymin))]))
+        if self.unit[0]=='pixels':
+            self.imageCrossHair.setText('X=%d, Y=%d' % (x, y))#, self.imageData[
+                # int((x - self.xmin) * self.hor_Npt / (self.xmax - self.xmin)), int(
+                #     (y - self.ymin) * self.ver_Npt / (self.ymax - self.ymin))]))
         else:
-            self.imageCrossHair.setText('X=%0.4f, Y=%0.4f, I=%.5e' % (x, y, 0))
+            if (x > self.xmin) and (x < self.xmax) and (y > self.ymin) and (y < self.ymax):
+                self.imageCrossHair.setText('X=%0.4f, Y=%0.4f, I=%.5e' % (x, y, self.imageData[
+                    int((x - self.xmin) * self.hor_Npt / (self.xmax - self.xmin)), int(
+                        (y - self.ymin) * self.ver_Npt / (self.ymax - self.ymin))]))
+            else:
+                self.imageCrossHair.setText('X=%0.4f, Y=%0.4f, I=%.5e' % (x, y, 0))
         #        else:
 
     #            if (x>self.xmin) and (x<self.xmax) and (y>self.ymin) and (y<self.ymax):
@@ -287,10 +292,10 @@ class Image_Widget(QWidget):
                 self.minLineEdit.setText(str(self.image_min))
             tmpData = np.where(self.imageData <= 0, 1, self.imageData)
             self.imageView.setImage(np.log10(tmpData), levels=(np.log10(self.image_min), np.log10(self.image_max)),
-                                    pos=pos, scale=scale, autoRange=True)
+                                    pos=pos, scale=scale, autoRange=False)
         else:
             self.imageView.setImage(self.imageData, levels=(self.image_min, self.image_max), pos=pos, scale=scale,
-                                    autoRange=True)
+                                    autoRange=False)
         # self.get_color_map()
         # self.update_color_map()
         self.imageView.ui.histogram.autoHistogramRange()

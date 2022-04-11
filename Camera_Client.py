@@ -25,7 +25,7 @@ class VideoThread(QThread):
         # capture from web cam
         while self._run_flag:
             rpi_name, image = self.image_hub.recv_image()
-            self.image_hub.send_reply(b'OK')
+            self.image_hub.send_reply(b'Image Received')
             if rpi_name=='chemmat-pi106':
                 self.change_pixmap_signal.emit(image)
         # shut down capture system
@@ -42,11 +42,11 @@ class Camera_Widget(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Camera Widget")
-        self.disply_width = 1290
+        self.disply_width = 1280
         self.display_height = 720
         self.intValidator=QIntValidator()
         # create the label that holds the image
-        img = np.random.rand(1290, 720)
+        img = np.random.rand(1280, 720)
         self.image_widget=Image_Widget(img,transpose=True)
         self.pos = [[0, 0], [100, 0], [100, 100], [0, 100]]
         #self.image_label.resize(self.disply_width, self.display_height)
@@ -78,7 +78,7 @@ class Camera_Widget(QWidget):
         self.transImageLabel = QLabel('Transformed Image Dimensions')
         self.hImageLayout = QHBoxLayout()
         self.transImageHLabel = QLabel('H:')
-        self.transImageHLineEdit = QLineEdit('1290')
+        self.transImageHLineEdit = QLineEdit('1280')
         self.hImageLayout.addWidget(self.transImageHLabel)
         self.hImageLayout.addWidget(self.transImageHLineEdit)
         self.transImageHLineEdit.setValidator(self.intValidator)

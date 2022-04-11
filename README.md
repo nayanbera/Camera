@@ -18,12 +18,12 @@ chmod a+x start_remote_server
 ```
 First start the remote server through the client machine using:
 ```
-./start_remote_server username@server_ip_OR_hostname client_ip
+./start_remote_camserver username@server_ip_OR_hostname client_ip
 ```
 For example, running a usb camera with raspberry Pi computer run the following to start 
 the remote server from your client computer as
 ```
-./start_remote_server pi@chemmat-pi106 164.54.162.64
+./start_remote_camserver pi@chemmat-pi106 164.54.162.64
 ```
 Run the client using:
 ```
